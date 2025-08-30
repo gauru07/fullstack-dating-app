@@ -365,3 +365,4 @@ If you’d like, I can:
 * add the SQL schema file (`supabase/schema.sql`) and a ready-to-run seeder script,
 * produce an `.env.example` with the exact keys used in the tutorial,
 * or generate a complete GitHub repo structure (folders, starter files) you can copy into a new repo. Which one would you like next?
+# fullstack-dating-app
