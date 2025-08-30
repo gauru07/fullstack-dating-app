@@ -1,25 +1,25 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 export default function EditProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
-    emailId: "",
+    email: "",
     bio: "",
     gender: "male" as "male" | "female" | "other",
     age: "",
     photoUrl: "",
     sexualOrientation: "",
     interestedIn: "",
-    relationshipType: "unsure" as "serious" | "casual" | "open" | "unsure" | "dating",
+    relationshipType: "unsure" as "casual" | "serious" | "friendship" | "unsure",
     height: "",
     location: "",
     education: "",
@@ -36,35 +36,49 @@ export default function EditProfilePage() {
   useEffect(() => {
     async function loadProfile() {
       try {
-        const response = await fetch("http://localhost:3001/profile/view", {
-          credentials: "include",
-        });
+        const supabase = createClient();
         
-        if (!response.ok) {
+        // Get current user
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          throw new Error("User not authenticated");
+        }
+        
+        // Get user profile from database
+        const { data: userData, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        
+        if (error) {
           throw new Error("Failed to load profile");
         }
         
-        const userData = await response.json();
+        // Split full_name into firstName and lastName
+        const nameParts = userData.full_name ? userData.full_name.split(' ') : ['', ''];
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.slice(1).join(' ') || '';
         
         setFormData({
-          firstName: userData.firstName || "",
-          lastName: userData.lastName || "",
-          emailId: userData.emailId || "",
+          firstName: firstName,
+          lastName: lastName,
+          email: userData.email || "",
           bio: userData.bio || "",
           gender: userData.gender || "male",
-          age: userData.age || "",
-          photoUrl: userData.photoUrl || "",
-          sexualOrientation: userData.sexualOrientation || "",
-          interestedIn: userData.interestedIn || "",
-          relationshipType: userData.relationshipType || "unsure",
+          age: userData.age ? userData.age.toString() : "",
+          photoUrl: userData.avatar_url || "",
+          sexualOrientation: userData.sexual_orientation || "",
+          interestedIn: userData.interested_in || "",
+          relationshipType: userData.relationship_type || "unsure",
           height: userData.height || "",
           location: userData.location || "",
           education: userData.education || "",
-          jobTitle: userData.jobTitle || "",
+          jobTitle: userData.job_title || "",
           company: userData.company || "",
           religion: userData.religion || "",
           ethnicity: userData.ethnicity || "",
-          languagesSpoken: userData.languagesSpoken || "",
+          languagesSpoken: Array.isArray(userData.languages_spoken) ? userData.languages_spoken.join(', ') : "",
           drinking: userData.drinking || "",
           smoking: userData.smoking || "",
           prompts: userData.prompts || "",
@@ -85,30 +99,57 @@ export default function EditProfilePage() {
     setError(null);
 
     try {
-      const response = await fetch("http://localhost:3001/profile/edit", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(formData),
-      });
+      const supabase = createClient();
+      
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
 
-      if (!response.ok) {
-        const errorData = await response.text();
-        throw new Error(errorData || "Failed to update profile");
+      // Update user profile in database
+      const { error } = await supabase
+        .from('users')
+        .update({
+          full_name: `${formData.firstName} ${formData.lastName}`.trim(),
+          email: formData.email,
+          bio: formData.bio,
+          gender: formData.gender,
+          age: parseInt(formData.age) || null,
+          avatar_url: formData.photoUrl,
+          sexual_orientation: formData.sexualOrientation,
+          interested_in: formData.interestedIn,
+          relationship_type: formData.relationshipType,
+          height: formData.height,
+          location: formData.location,
+          education: formData.education,
+          job_title: formData.jobTitle,
+          company: formData.company,
+          religion: formData.religion,
+          ethnicity: formData.ethnicity,
+          languages_spoken: formData.languagesSpoken ? formData.languagesSpoken.split(',').map(lang => lang.trim()) : [],
+          drinking: formData.drinking,
+          smoking: formData.smoking,
+          prompts: formData.prompts,
+        })
+        .eq('id', user.id);
+
+      if (error) {
+        throw new Error(error.message || "Failed to update profile");
       }
 
       alert("Profile updated successfully!");
       router.push("/profile");
     } catch (err: unknown) {
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError("Failed to update profile");
-        }
+      console.error("Profile update error:", err);
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Failed to update profile");
       }
-
+    } finally {
+      setSaving(false);
+    }
   }
 
   function handleInputChange(
@@ -201,16 +242,16 @@ export default function EditProfilePage() {
 
             <div className="mb-6">
               <label
-                htmlFor="emailId"
+                htmlFor="email"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
               >
                 Email *
               </label>
               <input
                 type="email"
-                id="emailId"
-                name="emailId"
-                value={formData.emailId}
+                id="email"
+                name="email"
+                value={formData.email}
                 onChange={handleInputChange}
                 required
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
