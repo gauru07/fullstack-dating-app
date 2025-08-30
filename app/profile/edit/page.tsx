@@ -1,10 +1,5 @@
 "use client";
 
-import PhotoUpload from "@/components/PhotoUpload";
-import {
-  getCurrentUserProfile,
-  updateUserProfile,
-} from "@/lib/actions/profile";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -15,28 +10,65 @@ export default function EditProfilePage() {
   const router = useRouter();
 
   const [formData, setFormData] = useState({
-    full_name: "",
-    username: "",
+    firstName: "",
+    lastName: "",
+    emailId: "",
     bio: "",
     gender: "male" as "male" | "female" | "other",
-    birthdate: "",
-    avatar_url: "",
+    age: "",
+    photoUrl: "",
+    sexualOrientation: "",
+    interestedIn: "",
+    relationshipType: "unsure" as "serious" | "casual" | "open" | "unsure" | "dating",
+    height: "",
+    location: "",
+    education: "",
+    jobTitle: "",
+    company: "",
+    religion: "",
+    ethnicity: "",
+    languagesSpoken: "",
+    drinking: "" as "yes" | "no" | "sometimes" | "",
+    smoking: "" as "yes" | "no" | "sometimes" | "",
+    prompts: "",
   });
 
   useEffect(() => {
     async function loadProfile() {
       try {
-        const profileData = await getCurrentUserProfile();
-        if (profileData) {
-          setFormData({
-            full_name: profileData.full_name || "",
-            username: profileData.username || "",
-            bio: profileData.bio || "",
-            gender: profileData.gender || "male",
-            birthdate: profileData.birthdate || "",
-            avatar_url: profileData.avatar_url || "",
-          });
+        const response = await fetch("http://localhost:3001/profile/view", {
+          credentials: "include",
+        });
+        
+        if (!response.ok) {
+          throw new Error("Failed to load profile");
         }
+        
+        const userData = await response.json();
+        
+        setFormData({
+          firstName: userData.firstName || "",
+          lastName: userData.lastName || "",
+          emailId: userData.emailId || "",
+          bio: userData.bio || "",
+          gender: userData.gender || "male",
+          age: userData.age || "",
+          photoUrl: userData.photoUrl || "",
+          sexualOrientation: userData.sexualOrientation || "",
+          interestedIn: userData.interestedIn || "",
+          relationshipType: userData.relationshipType || "unsure",
+          height: userData.height || "",
+          location: userData.location || "",
+          education: userData.education || "",
+          jobTitle: userData.jobTitle || "",
+          company: userData.company || "",
+          religion: userData.religion || "",
+          ethnicity: userData.ethnicity || "",
+          languagesSpoken: userData.languagesSpoken || "",
+          drinking: userData.drinking || "",
+          smoking: userData.smoking || "",
+          prompts: userData.prompts || "",
+        });
       } catch (err) {
         setError("Failed to load profile");
       } finally {
@@ -49,22 +81,34 @@ export default function EditProfilePage() {
 
   async function handleFormSubmit(e: React.FormEvent) {
     e.preventDefault();
-
     setSaving(true);
     setError(null);
 
     try {
-      const result = await updateUserProfile(formData);
-      if (result.success) {
-        router.push("/profile");
-      } else {
-        setError(result.error || "Failed to update profile.");
+      const response = await fetch("http://localhost:3001/profile/edit", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(errorData || "Failed to update profile");
       }
-    } catch (err) {
-      setError("Failed to update profile.");
-    } finally {
-      setSaving(false);
-    }
+
+      alert("Profile updated successfully!");
+      router.push("/profile");
+    } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError("Failed to update profile");
+        }
+      }
+
   }
 
   function handleInputChange(
@@ -93,8 +137,8 @@ export default function EditProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50 dark:from-gray-900 dark:to-gray-800">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50 dark:from-gray-900 dark:to-gray-800 py-8">
+      <div className="container mx-auto px-4">
         <header className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
             Edit Profile
@@ -104,87 +148,96 @@ export default function EditProfilePage() {
           </p>
         </header>
 
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-4xl mx-auto">
           <form
             className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8"
             onSubmit={handleFormSubmit}
           >
-            <div className="mb-8">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
-                Profile Picture
+            {error && (
+              <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+                {error}
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <label
+                  htmlFor="firstName"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
+                  First Name *
+                </label>
+                <input
+                  type="text"
+                  id="firstName"
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  placeholder="Enter your first name"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="lastName"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
+                  Last Name *
+                </label>
+                <input
+                  type="text"
+                  id="lastName"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  placeholder="Enter your last name"
+                />
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <label
+                htmlFor="emailId"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              >
+                Email *
               </label>
-              <div className="flex items-center space-x-6">
-                <div className="relative">
-                  <div className="w-24 h-24 rounded-full overflow-hidden">
-                    <img
-                      src={formData.avatar_url || "/default-avatar.png"}
-                      alt="Profile"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <PhotoUpload
-                    onPhotoUploaded={(url) => {
-                      setFormData((prev) => ({
-                        ...prev,
-                        avatar_url: url,
-                      }));
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                    Upload a new profile picture
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-500">
-                    JPG, PNG or GIF. Max 5MB.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Basic info */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div>
-                <label
-                  htmlFor="full_name"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                >
-                  Full Name *
-                </label>
-                <input
-                  type="text"
-                  id="full_name"
-                  name="full_name"
-                  value={formData.full_name}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  placeholder="Enter your full name"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="username"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                >
-                  Username *
-                </label>
-                <input
-                  type="text"
-                  id="username"
-                  name="username"
-                  value={formData.username}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  placeholder="Choose a username"
-                />
-              </div>
+              <input
+                type="email"
+                id="emailId"
+                name="emailId"
+                value={formData.emailId}
+                onChange={handleInputChange}
+                required
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                placeholder="Enter your email"
+              />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <label
+                  htmlFor="age"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
+                  Age *
+                </label>
+                <input
+                  type="number"
+                  id="age"
+                  name="age"
+                  value={formData.age}
+                  onChange={handleInputChange}
+                  required
+                  min="18"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                />
+              </div>
+
               <div>
                 <label
                   htmlFor="gender"
@@ -205,39 +258,20 @@ export default function EditProfilePage() {
                   <option value="other">Other</option>
                 </select>
               </div>
-
-              <div>
-                <label
-                  htmlFor="birthdate"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                >
-                  Birthday *
-                </label>
-                <input
-                  type="date"
-                  id="birthdate"
-                  name="birthdate"
-                  value={formData.birthdate}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                />
-              </div>
             </div>
 
-            <div className="mb-8">
+            <div className="mb-6">
               <label
                 htmlFor="bio"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
               >
-                About Me *
+                Bio
               </label>
               <textarea
                 id="bio"
                 name="bio"
                 value={formData.bio}
                 onChange={handleInputChange}
-                required
                 rows={4}
                 maxLength={500}
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent dark:bg-gray-700 dark:text-white resize-none"
@@ -248,11 +282,299 @@ export default function EditProfilePage() {
               </p>
             </div>
 
-            {error && (
-              <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-                {error}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <label
+                  htmlFor="sexualOrientation"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
+                  Sexual Orientation
+                </label>
+                <input
+                  type="text"
+                  id="sexualOrientation"
+                  name="sexualOrientation"
+                  value={formData.sexualOrientation}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  placeholder="e.g., Straight, Gay, Bisexual"
+                />
               </div>
-            )}
+
+              <div>
+                <label
+                  htmlFor="interestedIn"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
+                  Interested In
+                </label>
+                <input
+                  type="text"
+                  id="interestedIn"
+                  name="interestedIn"
+                  value={formData.interestedIn}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  placeholder="e.g., Men, Women, Both"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <label
+                  htmlFor="relationshipType"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
+                  Relationship Type
+                </label>
+                <select
+                  id="relationshipType"
+                  name="relationshipType"
+                  value={formData.relationshipType}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                >
+                  <option value="unsure">Unsure</option>
+                  <option value="serious">Serious</option>
+                  <option value="casual">Casual</option>
+                  <option value="open">Open</option>
+                  <option value="dating">Dating</option>
+                </select>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="height"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
+                  Height
+                </label>
+                <input
+                  type="text"
+                  id="height"
+                  name="height"
+                  value={formData.height}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  placeholder="e.g., 5'9\"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <label
+                  htmlFor="location"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
+                  Location
+                </label>
+                <input
+                  type="text"
+                  id="location"
+                  name="location"
+                  value={formData.location}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  placeholder="Your city or area"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="education"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
+                  Education
+                </label>
+                <input
+                  type="text"
+                  id="education"
+                  name="education"
+                  value={formData.education}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  placeholder="Your education level"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <label
+                  htmlFor="jobTitle"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
+                  Job Title
+                </label>
+                <input
+                  type="text"
+                  id="jobTitle"
+                  name="jobTitle"
+                  value={formData.jobTitle}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  placeholder="Your profession"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="company"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
+                  Company
+                </label>
+                <input
+                  type="text"
+                  id="company"
+                  name="company"
+                  value={formData.company}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  placeholder="Where you work"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <label
+                  htmlFor="religion"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
+                  Religion
+                </label>
+                <input
+                  type="text"
+                  id="religion"
+                  name="religion"
+                  value={formData.religion}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  placeholder="Your religious beliefs"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="ethnicity"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
+                  Ethnicity
+                </label>
+                <input
+                  type="text"
+                  id="ethnicity"
+                  name="ethnicity"
+                  value={formData.ethnicity}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  placeholder="Your ethnic background"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <label
+                  htmlFor="languagesSpoken"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
+                  Languages Spoken
+                </label>
+                <input
+                  type="text"
+                  id="languagesSpoken"
+                  name="languagesSpoken"
+                  value={formData.languagesSpoken}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  placeholder="e.g., English, Spanish"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="photoUrl"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
+                  Profile Photo URL
+                </label>
+                <input
+                  type="text"
+                  id="photoUrl"
+                  name="photoUrl"
+                  value={formData.photoUrl}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  placeholder="URL for your profile photo"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <label
+                  htmlFor="drinking"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
+                  Drinking
+                </label>
+                <select
+                  id="drinking"
+                  name="drinking"
+                  value={formData.drinking}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                >
+                  <option value="">Prefer not to say</option>
+                  <option value="yes">Yes</option>
+                  <option value="no">No</option>
+                  <option value="sometimes">Sometimes</option>
+                </select>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="smoking"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
+                  Smoking
+                </label>
+                <select
+                  id="smoking"
+                  name="smoking"
+                  value={formData.smoking}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                >
+                  <option value="">Prefer not to say</option>
+                  <option value="yes">Yes</option>
+                  <option value="no">No</option>
+                  <option value="sometimes">Sometimes</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <label
+                htmlFor="prompts"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              >
+                Prompts
+              </label>
+              <textarea
+                id="prompts"
+                name="prompts"
+                value={formData.prompts}
+                onChange={handleInputChange}
+                rows={3}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent dark:bg-gray-700 dark:text-white resize-none"
+                placeholder="Additional information about yourself"
+              />
+            </div>
 
             <div className="flex items-center justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
               <button

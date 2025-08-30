@@ -1,176 +1,192 @@
+// lib/actions/matches.ts
 "use server";
 
-import { UserProfile } from "@/app/profile/page";
-import { createClient } from "../supabase/server";
+import { createClient } from "@/lib/supabase/server";
+import { UserProfile } from "@/types/user";
 
-export async function getPotentialMatches(): Promise<UserProfile[]> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+export async function getAllProfiles(): Promise<UserProfile[]> {
+  try {
+    const supabase = await createClient();
+    
+    const { data: users, error } = await supabase
+      .from('users')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-  if (!user) {
-    throw new Error("Not authenticated.");
+    if (error) {
+      console.error('Failed to fetch profiles:', error);
+      throw new Error('Failed to fetch profiles');
+    }
+
+    // Transform the data to UserProfile format
+    return users.map(user => ({
+      id: user.id,
+      name: user.full_name,
+      age: user.age,
+      bio: user.bio,
+      photos: user.avatar_url ? [user.avatar_url] : [],
+      gender: user.gender,
+      location: user.location,
+      jobTitle: user.job_title,
+      company: user.company,
+      education: user.education,
+      sexualOrientation: user.sexual_orientation,
+      interestedIn: user.interested_in,
+      relationshipType: user.relationship_type,
+      height: user.height,
+      religion: user.religion,
+      ethnicity: user.ethnicity,
+      languagesSpoken: user.languages_spoken || [],
+      drinking: user.drinking,
+      smoking: user.smoking,
+      prompts: user.prompts,
+    }));
+  } catch (error) {
+    console.error('Error fetching profiles:', error);
+    throw new Error('Failed to fetch profiles');
   }
+}
 
-  const { data: potentialMatches, error } = await supabase
-    .from("users")
-    .select("*")
-    .neq("id", user.id)
-    .limit(50);
+export async function likeUser(toUserId: string): Promise<{success: boolean; isMatch: boolean; matchedUser?: UserProfile}> {
+  try {
+    const supabase = await createClient();
+    
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
 
-  if (error) {
-    throw new Error("failed to fetch potential matches");
-  }
-
-  const { data: userPrefs, error: prefsError } = await supabase
-    .from("users")
-    .select("preferences")
-    .eq("id", user.id)
-    .single();
-
-  if (prefsError) {
-    throw new Error("Failed to get user preferences");
-  }
-
-  const currentUserPrefs = userPrefs.preferences as any;
-  const genderPreference = currentUserPrefs?.gender_preference || [];
-  const filteredMatches =
-    potentialMatches
-      .filter((match) => {
-        if (!genderPreference || genderPreference.length === 0) {
-          return true;
+    // Create a like record
+    const { error: likeError } = await supabase
+      .from('likes')
+      .insert([
+        {
+          from_user_id: user.id,
+          to_user_id: toUserId,
+          status: 'interested'
         }
+      ]);
 
-        return genderPreference.includes(match.gender);
-      })
-      .map((match) => ({
-        id: match.id,
-        full_name: match.full_name,
-        username: match.username,
-        email: "",
-        gender: match.gender,
-        birthdate: match.birthdate,
-        bio: match.bio,
-        avatar_url: match.avatar_url,
-        preferences: match.preferences,
-        location_lat: undefined,
-        location_lng: undefined,
-        last_active: new Date().toISOString(),
-        is_verified: true,
-        is_online: false,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })) || [];
-  return filteredMatches;
-}
-
-export async function likeUser(toUserId: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    throw new Error("Not authenticated.");
-  }
-
-  const { error: likeError } = await supabase.from("likes").insert({
-    from_user_id: user.id,
-    to_user_id: toUserId,
-  });
-
-  if (likeError) {
-    throw new Error("Failed to create like");
-  }
-
-  const { data: existingLike, error: checkError } = await supabase
-    .from("likes")
-    .select("*")
-    .eq("from_user_id", toUserId)
-    .eq("to_user_id", user.id)
-    .single();
-
-  if (checkError && checkError.code !== "PGRST116") {
-    throw new Error("Failed to check for match");
-  }
-
-  if (existingLike) {
-    const { data: matchedUser, error: userError } = await supabase
-      .from("users")
-      .select("*")
-      .eq("id", toUserId)
-      .single();
-
-    if (userError) {
-      throw new Error("Failed to fetch matched user");
+    if (likeError) {
+      throw new Error('Failed to like user');
     }
 
-    return {
-      success: true,
-      isMatch: true,
-      matchedUser: matchedUser as UserProfile,
-    };
-  }
+    // Check if it's a match (if the other user has also liked this user)
+    const { data: receivedLikes, error: matchError } = await supabase
+      .from('likes')
+      .select('from_user_id')
+      .eq('to_user_id', user.id)
+      .eq('from_user_id', toUserId)
+      .eq('status', 'interested');
 
-  return { success: true, isMatch: false };
-}
-
-export async function getUserMatches() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    throw new Error("Not authenticated.");
-  }
-
-  const { data: matches, error } = await supabase
-    .from("matches")
-    .select("*")
-    .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
-    .eq("is_active", true);
-
-  if (error) {
-    throw new Error("Failed to fetch matches");
-  }
-
-  const matchedUsers: UserProfile[] = [];
-
-  for (const match of matches || []) {
-    const otherUserId =
-      match.user1_id === user.id ? match.user2_id : match.user1_id;
-
-    const { data: otherUser, error: userError } = await supabase
-      .from("users")
-      .select("*")
-      .eq("id", otherUserId)
-      .single();
-
-    if (userError) {
-      continue;
+    if (matchError) {
+      console.error('Error checking for match:', matchError);
+      return { success: true, isMatch: false };
     }
 
-    matchedUsers.push({
-      id: otherUser.id,
-      full_name: otherUser.full_name,
-      username: otherUser.username,
-      email: otherUser.email,
-      gender: otherUser.gender,
-      birthdate: otherUser.birthdate,
-      bio: otherUser.bio,
-      avatar_url: otherUser.avatar_url,
-      preferences: otherUser.preferences,
-      location_lat: undefined,
-      location_lng: undefined,
-      last_active: new Date().toISOString(),
-      is_verified: true,
-      is_online: false,
-      created_at: match.created_at,
-      updated_at: match.created_at,
+    const isMatch = receivedLikes && receivedLikes.length > 0;
+
+    if (isMatch) {
+      // Get the matched user's profile
+      const { data: matchedUser, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', toUserId)
+        .single();
+
+      if (userError) {
+        console.error('Error fetching matched user:', userError);
+        return { success: true, isMatch: true };
+      }
+
+      return {
+        success: true,
+        isMatch: true,
+        matchedUser: {
+          id: matchedUser.id,
+          name: matchedUser.full_name,
+          age: matchedUser.age,
+          bio: matchedUser.bio,
+          photos: matchedUser.avatar_url ? [matchedUser.avatar_url] : [],
+          gender: matchedUser.gender,
+          location: matchedUser.location,
+          jobTitle: matchedUser.job_title,
+          company: matchedUser.company,
+          education: matchedUser.education,
+          sexualOrientation: matchedUser.sexual_orientation,
+          interestedIn: matchedUser.interested_in,
+          relationshipType: matchedUser.relationship_type,
+          height: matchedUser.height,
+          religion: matchedUser.religion,
+          ethnicity: matchedUser.ethnicity,
+          languagesSpoken: matchedUser.languages_spoken || [],
+          drinking: matchedUser.drinking,
+          smoking: matchedUser.smoking,
+          prompts: matchedUser.prompts,
+        },
+      };
+    }
+
+    return { success: true, isMatch: false };
+  } catch (error) {
+    console.error('Error liking user:', error);
+    throw new Error('Failed to like user');
+  }
+}
+
+export async function getUserMatches(): Promise<UserProfile[]> {
+  try {
+    const supabase = await createClient();
+    
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    // Get all matches for the current user
+    const { data: matches, error } = await supabase
+      .from('matches')
+      .select(`
+        user1_id,
+        user2_id,
+        users!matches_user1_id_fkey(id, full_name, age, bio, avatar_url, gender, location, job_title, company, education, sexual_orientation, interested_in, relationship_type, height, religion, ethnicity, languages_spoken, drinking, smoking, prompts)
+      `)
+      .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`);
+
+    if (error) {
+      throw new Error('Failed to fetch user matches');
+    }
+
+    // Transform the data to UserProfile format
+    return matches.map(match => {
+      const matchedUser = match.users;
+      return {
+        id: matchedUser.id,
+        name: matchedUser.full_name,
+        age: matchedUser.age,
+        bio: matchedUser.bio,
+        photos: matchedUser.avatar_url ? [matchedUser.avatar_url] : [],
+        gender: matchedUser.gender,
+        location: matchedUser.location,
+        jobTitle: matchedUser.job_title,
+        company: matchedUser.company,
+        education: matchedUser.education,
+        sexualOrientation: matchedUser.sexual_orientation,
+        interestedIn: matchedUser.interested_in,
+        relationshipType: matchedUser.relationship_type,
+        height: matchedUser.height,
+        religion: matchedUser.religion,
+        ethnicity: matchedUser.ethnicity,
+        languagesSpoken: matchedUser.languages_spoken || [],
+        drinking: matchedUser.drinking,
+        smoking: matchedUser.smoking,
+        prompts: matchedUser.prompts,
+      };
     });
+  } catch (error) {
+    console.error('Error fetching user matches:', error);
+    throw new Error('Failed to fetch user matches');
   }
-
-  return matchedUsers;
 }

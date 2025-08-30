@@ -22,19 +22,17 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="en" className="h-full">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased h-full`}
-      >
+    <html lang="en">
+      <body className="bg-white dark:bg-gray-900">
         <AuthProvider>
-          <div className="h-full flex flex-col">
-            <Navbar />
+          <Navbar />
+          <main className="min-h-screen">
             {children}
-          </div>
+          </main>
         </AuthProvider>
       </body>
     </html>

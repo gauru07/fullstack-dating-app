@@ -1,16 +1,35 @@
-import { UserProfile } from "@/app/profile/page";
-import { calculateAge } from "@/lib/helpers/calculate-age";
+// components/MatchCard.tsx
+// import { UserProfile } from "@/app/profile/page";
+// import Image from "next/image";
+
+import { UserProfile } from "@/types/user"; // Import from shared location
 import Image from "next/image";
+
+
 export default function MatchCard({ user }: { user: UserProfile }) {
+  // Calculate age from birthdate
+  const calculateAge = (birthdate: string) => {
+    const birthDate = new Date(birthdate);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    
+    return age;
+  };
+
   return (
     <div className="relative w-full max-w-sm mx-auto">
-      <div className="card-swipe aspect-[3/4] overflow-hidden">
+      <div className="card-swipe aspect-[3/4] overflow-hidden rounded-2xl shadow-xl">
         <div className="relative w-full h-full">
           <Image
-            src={user.avatar_url}
+            src={user.avatar_url || "/default-avatar.png"}
             alt={user.full_name}
             fill
-            className={`object-cover transition-opacity duration-300`}
+            className="object-cover transition-opacity duration-300"
             priority
           />
 
@@ -23,7 +42,7 @@ export default function MatchCard({ user }: { user: UserProfile }) {
                   {user.full_name}, {calculateAge(user.birthdate)}
                 </h2>
                 <p className="text-sm opacity-90 mb-2">@{user.username}</p>
-                <p className="text-sm leading-relaxed">{user.bio}</p>
+                <p className="text-sm leading-relaxed line-clamp-2">{user.bio}</p>
               </div>
             </div>
           </div>

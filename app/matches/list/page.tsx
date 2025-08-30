@@ -1,111 +1,90 @@
+// app/matches/list/page.tsx
 "use client";
-
-import { UserProfile } from "@/app/profile/page";
 import { getUserMatches } from "@/lib/actions/matches";
+import { UserProfile } from "@/types/user";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { calculateAge } from "@/lib/helpers/calculate-age";
+import Image from "next/image";
 
 export default function MatchesListPage() {
   const [matches, setMatches] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function loadMatches() {
-      try {
-        const userMatches = await getUserMatches();
-        setMatches(userMatches);
-        console.log(userMatches);
-      } catch (error) {
-        setError("Failed to load matches.");
-      } finally {
-        setLoading(false);
-      }
-    }
-
     loadMatches();
   }, []);
 
+  const loadMatches = async () => {
+    try {
+      setLoading(true);
+      const userMatches = await getUserMatches();
+      setMatches(userMatches);
+    } catch (error) {
+      console.error("Error loading matches:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">
-            Loading your matches...
-          </p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Loading matches...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50 dark:from-gray-900 dark:to-gray-800">
-      <div className="container mx-auto px-4 py-8">
-        <header className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Your Matches
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            {matches.length} match{matches.length !== 1 ? "es" : ""}
-          </p>
-        </header>
-
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+      <div className="container mx-auto px-4">
+        <h1 className="text-3xl font-bold text-center mb-8 text-gray-800 dark:text-white">
+          Your Matches
+        </h1>
+        
         {matches.length === 0 ? (
-          <div className="text-center max-w-md mx-auto p-8">
-            <div className="w-24 h-24 bg-gradient-to-r from-pink-500 to-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
-              <span className="text-4xl">💕</span>
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-              No matches yet
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Start swiping to find your perfect match!
-            </p>
-            <Link
-              href="/matches"
-              className="bg-gradient-to-r from-pink-500 to-red-500 text-white font-semibold py-3 px-6 rounded-full hover:from-pink-600 hover:to-red-600 transition-all duration-200"
+          <div className="text-center text-gray-600 dark:text-gray-300">
+            <p className="text-lg mb-4">You dont have any matches yet.</p>
+            <Link 
+              href="/matches" 
+              className="px-6 py-3 bg-pink-500 text-white rounded-full hover:bg-pink-600 transition-colors"
             >
-              Start Swiping
+              Discover People
             </Link>
           </div>
         ) : (
-          <div className="max-w-2xl mx-auto">
-            <div className="grid gap-4">
-              {matches.map((match, key) => (
-                <Link
-                  key={key}
-                  href={`/chat/${match.id}`}
-                  className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
-                >
-                  <div className="flex items-center space-x-4">
-                    <div className="relative w-16 h-16 rounded-full overflow-hidden flex-shrink-0">
-                      <img
-                        src={match.avatar_url}
-                        alt={match.full_name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        {match.full_name}, {calculateAge(match.birthdate)}
-                      </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                        @{match.username}
-                      </p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                        {match.bio}
-                      </p>
-                    </div>
-                    <div className="flex-shrink-0">
-                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {matches.map((match) => (
+              <div key={match.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
+                <div className="relative h-48 w-full">
+                  <Image
+                    src={match.avatar_url}
+                    alt={match.full_name}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <div className="p-4">
+                  <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
+                    {match.full_name}
+                  </h2>
+                  <p className="text-gray-600 dark:text-gray-300 mb-2">@{match.username}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
+                    {match.bio}
+                  </p>
+                  <div className="mt-4 flex justify-between items-center">
+                    <Link 
+                      href={`/chat/${match.id}`}
+                      className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                    >
+                      Message
+                    </Link>
+                    <button className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                      View Profile
+                    </button>
                   </div>
-                </Link>
-              ))}
-            </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
