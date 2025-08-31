@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
 
 export default function Signup() {
   const router = useRouter();
@@ -14,7 +13,7 @@ export default function Signup() {
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
-    email: "",
+    emailId: "",
     password: "",
     age: "",
     gender: "male",
@@ -48,55 +47,44 @@ export default function Signup() {
   setError("");
 
   try {
-    const supabase = createClient();
-    
-    // First, create the user account with Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: form.email,
-      password: form.password,
+    const response = await fetch('http://localhost:3001/signup', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        firstName: form.firstName,
+        lastName: form.lastName,
+        emailId: form.emailId,
+        password: form.password,
+        age: Number(form.age),
+        gender: form.gender,
+        photoUrl: form.profilePic,
+        about: form.bio,
+        relationshipType: form.relationshipType,
+        location: form.location,
+        education: form.education,
+        jobTitle: form.jobTitle,
+        company: form.company,
+        religion: form.religion,
+        drinking: form.drinking,
+        smoking: form.smoking,
+        prompts: form.prompts,
+      }),
     });
 
-    if (authError) {
-      throw new Error(authError.message);
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Signup failed');
     }
 
-    if (authData.user) {
-      // Then, create the user profile in the database
-      const { error: profileError } = await supabase
-        .from('users')
-        .insert([
-          {
-            id: authData.user.id,
-            full_name: `${form.firstName} ${form.lastName}`,
-            email: form.email,
-            age: Number(form.age),
-            gender: form.gender,
-            bio: form.bio,
-            sexual_orientation: form.sexualOrientation,
-            interested_in: form.interestedIn,
-            relationship_type: form.relationshipType,
-            height: form.height,
-            location: form.location,
-            education: form.education,
-            job_title: form.jobTitle,
-            company: form.company,
-            religion: form.religion,
-            ethnicity: form.ethnicity,
-            languages_spoken: form.languagesSpoken,
-            drinking: form.drinking,
-            smoking: form.smoking,
-            prompts: form.prompts,
-            avatar_url: form.profilePic,
-          }
-        ]);
-
-      if (profileError) {
-        console.error('Profile creation error:', profileError);
-        // Don't throw error here as the user account was created successfully
-      }
-
-      alert("Signup successful! Please check your email to verify your account.");
+    if (data.message === 'User registered successfully') {
+      alert("Signup successful! You can now login.");
       router.push("/login");
+    } else {
+      throw new Error('Signup failed');
     }
   } catch (err: unknown) {
     console.error("Signup error:", err);
@@ -216,12 +204,13 @@ export default function Signup() {
                   </label>
                   <input
                     type="email"
-                    id="email"
-                    name="email"
+                    id="emailId"
+                    name="emailId"
                     required
-                    value={form.email}
+                    value={form.emailId}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-colors"
+                    placeholder="Enter your email"
                   />
                 </div>
                 

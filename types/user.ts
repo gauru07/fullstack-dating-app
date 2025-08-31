@@ -14,8 +14,8 @@ export interface BackendUser {
   firstName: string;
   lastName: string;
   emailId: string;
-  age: number;
-  gender: string;
+  age?: number;
+  gender?: string;
   photoUrl: string;
   about?: string;
   skills?: string[];
@@ -48,26 +48,44 @@ export interface UserProfile {
   is_online: boolean;
   created_at: string;
   updated_at: string;
+  // Additional fields from BackendUser
+  education?: string;
+  work?: string;
+  religion?: string;
+  languages?: string[];
+  relationshipType?: string;
+  smoking?: string;
+  drinking?: string;
+  skills?: string[];
+  prompts?: string[];
 }
 
 // Helper function to convert BackendUser to UserProfile
 export function backendToUserProfile(backendUser: BackendUser): UserProfile {
-  // Map backend gender to the expected values
+  if (!backendUser || !backendUser._id) {
+    throw new Error('Invalid user data');
+  }
+
+  // Map backend gender to the expected values with fallback
   const genderMap: Record<string, "male" | "female" | "other"> = {
     male: "male",
     female: "female",
-    // Add any other mappings you might need
   };
   
-  const mappedGender = genderMap[backendUser.gender.toLowerCase()] || "other";
+  const mappedGender = backendUser.gender 
+    ? (genderMap[backendUser.gender.toLowerCase()] || "other")
+    : "other";
+
+  // Calculate age with fallback
+  const age = backendUser.age || 25; // Default age if not provided
 
   return {
     id: backendUser._id,
-    full_name: `${backendUser.firstName} ${backendUser.lastName}`,
-    username: backendUser.emailId.split('@')[0],
-    email: backendUser.emailId,
+    full_name: `${backendUser.firstName || ''} ${backendUser.lastName || ''}`.trim(),
+    username: backendUser.emailId ? backendUser.emailId.split('@')[0] : 'user',
+    email: backendUser.emailId || '',
     gender: mappedGender,
-    birthdate: new Date(new Date().getFullYear() - backendUser.age, 0, 1).toISOString(),
+    birthdate: new Date(new Date().getFullYear() - age, 0, 1).toISOString(),
     bio: backendUser.about || "",
     avatar_url: backendUser.photoUrl || "/default-avatar.png",
     preferences: backendUser.preference || {},
@@ -78,5 +96,15 @@ export function backendToUserProfile(backendUser: BackendUser): UserProfile {
     is_online: false,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
+    // Map additional fields
+    education: backendUser.education,
+    work: backendUser.work,
+    religion: backendUser.religion,
+    languages: backendUser.languages,
+    relationshipType: backendUser.relationshipType,
+    smoking: backendUser.smoking,
+    drinking: backendUser.drinking,
+    skills: backendUser.skills,
+    prompts: backendUser.prompts,
   };
 }

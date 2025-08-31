@@ -3,14 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
 
 export default function Login() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [form, setForm] = useState({
-    email: "",
+    emailId: "",
     password: "",
   });
 
@@ -25,20 +24,28 @@ export default function Login() {
     setError("");
 
     try {
-      const supabase = createClient();
-      
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: form.email,
-        password: form.password,
+      const response = await fetch('http://localhost:3001/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          emailId: form.emailId,
+          password: form.password,
+        }),
       });
 
-      if (error) {
-        throw new Error(error.message);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Login failed');
       }
 
-      if (data.user) {
-        alert("Login successful!");
+      if (data.message === 'Login successful') {
         router.push("/matches");
+      } else {
+        throw new Error('Login failed');
       }
     } catch (err: unknown) {
       console.error("Login error:", err);
@@ -72,15 +79,15 @@ export default function Login() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label htmlFor="emailId" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Email *
             </label>
             <input
               type="email"
-              id="email"
-              name="email"
+              id="emailId"
+              name="emailId"
               required
-              value={form.email}
+              value={form.emailId}
               onChange={handleChange}
               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white transition-colors"
               placeholder="Enter your email"
@@ -124,7 +131,7 @@ export default function Login() {
 
         <div className="text-center pt-4">
           <p className="text-gray-600 dark:text-gray-400">
-            Dont have an account?{" "}
+            Don't have an account?{" "}
             <Link
               href="/auth"
               className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-semibold transition-colors"

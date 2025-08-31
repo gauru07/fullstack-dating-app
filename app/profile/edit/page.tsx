@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 
 export default function EditProfilePage() {
   const [loading, setLoading] = useState(true);
@@ -36,54 +35,47 @@ export default function EditProfilePage() {
   useEffect(() => {
     async function loadProfile() {
       try {
-        const supabase = createClient();
-        
-        // Get current user
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          throw new Error("User not authenticated");
-        }
-        
-        // Get user profile from database
-        const { data: userData, error } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-        
-        if (error) {
+        const response = await fetch('http://localhost:3001/profile/view', {
+          method: 'GET',
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
           throw new Error("Failed to load profile");
         }
+
+        const profileData = await response.json();
         
         // Split full_name into firstName and lastName
-        const nameParts = userData.full_name ? userData.full_name.split(' ') : ['', ''];
+        const nameParts = profileData.firstName ? [profileData.firstName, profileData.lastName || ''] : ['', ''];
         const firstName = nameParts[0] || '';
         const lastName = nameParts.slice(1).join(' ') || '';
         
         setFormData({
           firstName: firstName,
           lastName: lastName,
-          email: userData.email || "",
-          bio: userData.bio || "",
-          gender: userData.gender || "male",
-          age: userData.age ? userData.age.toString() : "",
-          photoUrl: userData.avatar_url || "",
-          sexualOrientation: userData.sexual_orientation || "",
-          interestedIn: userData.interested_in || "",
-          relationshipType: userData.relationship_type || "unsure",
-          height: userData.height || "",
-          location: userData.location || "",
-          education: userData.education || "",
-          jobTitle: userData.job_title || "",
-          company: userData.company || "",
-          religion: userData.religion || "",
-          ethnicity: userData.ethnicity || "",
-          languagesSpoken: Array.isArray(userData.languages_spoken) ? userData.languages_spoken.join(', ') : "",
-          drinking: userData.drinking || "",
-          smoking: userData.smoking || "",
-          prompts: userData.prompts || "",
+          email: profileData.emailId || "",
+          bio: profileData.bio || "",
+          gender: profileData.gender || "male",
+          age: profileData.age ? profileData.age.toString() : "",
+          photoUrl: profileData.photoUrl || "",
+          sexualOrientation: profileData.sexualOrientation || "",
+          interestedIn: profileData.interestedIn || "",
+          relationshipType: profileData.relationshipType || "unsure",
+          height: profileData.height || "",
+          location: profileData.location || "",
+          education: profileData.education || "",
+          jobTitle: profileData.jobTitle || "",
+          company: profileData.company || "",
+          religion: profileData.religion || "",
+          ethnicity: profileData.ethnicity || "",
+          languagesSpoken: Array.isArray(profileData.languagesSpoken) ? profileData.languagesSpoken.join(', ') : "",
+          drinking: profileData.drinking || "",
+          smoking: profileData.smoking || "",
+          prompts: profileData.prompts || "",
         });
       } catch (err) {
+        console.error("Error loading profile:", err);
         setError("Failed to load profile");
       } finally {
         setLoading(false);
@@ -99,43 +91,42 @@ export default function EditProfilePage() {
     setError(null);
 
     try {
-      const supabase = createClient();
-      
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error("User not authenticated");
-      }
+      const updateData = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        emailId: formData.email,
+        bio: formData.bio,
+        gender: formData.gender,
+        age: parseInt(formData.age) || null,
+        photoUrl: formData.photoUrl,
+        sexualOrientation: formData.sexualOrientation,
+        interestedIn: formData.interestedIn,
+        relationshipType: formData.relationshipType,
+        height: formData.height,
+        location: formData.location,
+        education: formData.education,
+        jobTitle: formData.jobTitle,
+        company: formData.company,
+        religion: formData.religion,
+        ethnicity: formData.ethnicity,
+        languagesSpoken: formData.languagesSpoken ? formData.languagesSpoken.split(',').map(lang => lang.trim()) : [],
+        drinking: formData.drinking,
+        smoking: formData.smoking,
+        prompts: formData.prompts,
+      };
 
-      // Update user profile in database
-      const { error } = await supabase
-        .from('users')
-        .update({
-          full_name: `${formData.firstName} ${formData.lastName}`.trim(),
-          email: formData.email,
-          bio: formData.bio,
-          gender: formData.gender,
-          age: parseInt(formData.age) || null,
-          avatar_url: formData.photoUrl,
-          sexual_orientation: formData.sexualOrientation,
-          interested_in: formData.interestedIn,
-          relationship_type: formData.relationshipType,
-          height: formData.height,
-          location: formData.location,
-          education: formData.education,
-          job_title: formData.jobTitle,
-          company: formData.company,
-          religion: formData.religion,
-          ethnicity: formData.ethnicity,
-          languages_spoken: formData.languagesSpoken ? formData.languagesSpoken.split(',').map(lang => lang.trim()) : [],
-          drinking: formData.drinking,
-          smoking: formData.smoking,
-          prompts: formData.prompts,
-        })
-        .eq('id', user.id);
+      const response = await fetch('http://localhost:3001/profile/update', {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updateData),
+      });
 
-      if (error) {
-        throw new Error(error.message || "Failed to update profile");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to update profile");
       }
 
       alert("Profile updated successfully!");
@@ -166,7 +157,7 @@ export default function EditProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50 dark:from-gray-900 dark:to-gray-800 pt-20 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mx-auto"></div>
           <p className="mt-4 text-gray-600 dark:text-gray-400">
@@ -178,8 +169,8 @@ export default function EditProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50 dark:from-gray-900 dark:to-gray-800 py-8">
-      <div className="container mx-auto px-4">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50 dark:from-gray-900 dark:to-gray-800 pt-20">
+      <div className="container mx-auto px-4 py-8">
         <header className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
             Edit Profile
@@ -398,7 +389,7 @@ export default function EditProfilePage() {
                   value={formData.height}
                   onChange={handleInputChange}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  placeholder="e.g., 5'9\"
+                  placeholder="e.g., 5'9&quot;"
                 />
               </div>
             </div>
