@@ -32,24 +32,7 @@ export default function ChatListPage() {
       });
 
       if (!response.ok) {
-        // If connections endpoint fails, try the matches endpoint
-        const matchesResponse = await fetch('http://localhost:3001/matches', {
-          credentials: 'include',
-        });
-
-        if (!matchesResponse.ok) {
-          throw new Error('Failed to fetch matches');
-        }
-
-        const matchesData = await matchesResponse.json();
-        console.log("Matches data:", matchesData);
-        
-        if (matchesData.data && Array.isArray(matchesData.data)) {
-          const userMatches = matchesData.data.map((user: BackendUser) => backendToUserProfile(user));
-          setMatches(userMatches);
-        } else {
-          setMatches([]);
-        }
+        throw new Error('Failed to fetch matches');
       } else {
         const data = await response.json();
         console.log("Chat connections data:", data);

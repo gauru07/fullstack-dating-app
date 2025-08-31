@@ -1,6 +1,6 @@
 "use server";
 
-import { UserProfile } from "@/app/profile/page";
+import { UserProfile } from "@/types/user";
 import { createClient } from "../supabase/server";
 
 export async function getCurrentUserProfile() {

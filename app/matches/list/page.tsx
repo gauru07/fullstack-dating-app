@@ -117,9 +117,9 @@ export default function MatchesListPage() {
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
             My Matches
           </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-400 mb-6">
-            People you've connected with and can start conversations
-          </p>
+                      <p className="text-lg text-gray-600 dark:text-gray-400 mb-6">
+              People you&apos;ve connected with and can start conversations
+            </p>
           
           {/* Stats */}
           <div className="flex items-center justify-center space-x-8 mb-8">

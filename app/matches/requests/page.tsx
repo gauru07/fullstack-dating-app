@@ -44,17 +44,19 @@ export default function RequestsPage() {
         return;
       }
 
-      const requestProfiles = data.data.map((item: any, index: number) => {
+      const requestProfiles = data.data.map((item: unknown, index: number) => {
         try {
           let userData: BackendUser;
           let requestId: string;
           
-          if (item.requestId && item.user) { // Check for new structure
-            userData = item.user;
-            requestId = item.requestId;
+          const typedItem = item as { requestId?: string; user?: BackendUser; _id?: string };
+          
+          if (typedItem.requestId && typedItem.user) { // Check for new structure
+            userData = typedItem.user;
+            requestId = typedItem.requestId;
           } else { // Assume old structure
-            userData = item;
-            requestId = item._id; // Use user ID as request ID for now
+            userData = item as BackendUser;
+            requestId = (item as BackendUser)._id; // Use user ID as request ID for now
           }
 
           if (!userData || !userData._id) {
@@ -232,7 +234,7 @@ export default function RequestsPage() {
             </div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">No pending requests</h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              When someone likes your profile, you'll see their request here.
+              When someone likes your profile, you&apos;ll see their request here.
             </p>
             <Link 
               href="/matches" 

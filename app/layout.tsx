@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/auth-context";
 import Navbar from "@/components/Navbar";
+import SetCurrentUser from "@/components/SetCurrentUser";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,9 +31,10 @@ export default function RootLayout({
       <body className="bg-white dark:bg-gray-900">
         <AuthProvider>
           <Navbar />
-          <main className="min-h-screen">
+          <main className="min-h-screen pt-16">
             {children}
           </main>
+          <SetCurrentUser />
         </AuthProvider>
       </body>
     </html>

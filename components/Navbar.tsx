@@ -5,9 +5,11 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 export default function Navbar() {
-  const { signOut, user } = useAuth();
+  const { signOut, user, loading } = useAuth();
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+
 
   // Check if current path matches navigation item
   const isActive = (path: string) => {
@@ -69,7 +71,12 @@ export default function Navbar() {
 
           {/* User Actions */}
           <div className="flex items-center space-x-4">
-            {user ? (
+            {loading ? (
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 border-2 border-pink-500/30 border-t-pink-500 rounded-full animate-spin"></div>
+                <span className="text-sm text-gray-500 dark:text-gray-400">Loading...</span>
+              </div>
+            ) : user ? (
               <>
                 {/* User Avatar */}
                 <div className="hidden sm:flex items-center space-x-3">

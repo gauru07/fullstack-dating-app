@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/contexts/auth-context";
+import { getImageUrl } from "@/lib/config";
 
 interface BackendProfile {
   _id: string;
@@ -58,6 +59,21 @@ export default function ProfilePage() {
       }
 
       const data = await response.json();
+      console.log('Profile data loaded:', data);
+      console.log('Photo URL:', data.photoUrl);
+      console.log('Photos array:', data.photos);
+      
+      // Test getImageUrl function
+      if (data.photoUrl) {
+        console.log('Testing getImageUrl with photoUrl:', data.photoUrl);
+        console.log('Result:', getImageUrl(data.photoUrl));
+      }
+      
+      if (data.photos && data.photos.length > 0) {
+        console.log('Testing getImageUrl with first photo:', data.photos[0]);
+        console.log('Result:', getImageUrl(data.photos[0]));
+      }
+      
       setProfile(data);
     } catch (err) {
       console.error("Error loading profile:", err);
@@ -168,7 +184,7 @@ export default function ProfilePage() {
                   <div className="relative">
                     <div className="w-32 h-32 rounded-full overflow-hidden ring-4 ring-pink-200 dark:ring-pink-800">
                       <Image
-                        src={profile.photoUrl || "/default-avatar.png"}
+                        src={getImageUrl(profile.photoUrl)}
                         alt={getDisplayName()}
                         width={128}
                         height={128}
@@ -259,7 +275,7 @@ export default function ProfilePage() {
                   {/* Main Profile Photo */}
                   <div className="relative aspect-square rounded-xl overflow-hidden border-2 border-pink-300 dark:border-pink-700">
                     <Image
-                      src={profile.photoUrl || "/default-avatar.png"}
+                      src={getImageUrl(profile.photoUrl)}
                       alt="Profile"
                       fill
                       className="object-cover"
@@ -274,7 +290,7 @@ export default function ProfilePage() {
                     profile.photos.slice(0, 4).map((photo, index) => (
                       <div key={index} className="relative aspect-square rounded-xl overflow-hidden border-2 border-gray-200 dark:border-gray-700">
                         <Image
-                          src={photo}
+                          src={getImageUrl(photo)}
                           alt={`Photo ${index + 1}`}
                           fill
                           className="object-cover"

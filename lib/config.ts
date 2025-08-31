@@ -1,6 +1,16 @@
 // Backend API configuration
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
+// Helper function to get full image URL
+export const getImageUrl = (imagePath: string): string => {
+  if (!imagePath) return "/default-avatar.png";
+  if (imagePath.startsWith("http")) return imagePath;
+  
+  // Ensure the path starts with / if it doesn't already
+  const normalizedPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+  return `${API_BASE_URL}${normalizedPath}`;
+};
+
 // API endpoints
 export const API_ENDPOINTS = {
   // Auth
@@ -13,7 +23,7 @@ export const API_ENDPOINTS = {
   PROFILE_VIEW: `${API_BASE_URL}/profile/view`,
   PROFILE_UPLOAD_PHOTOS: `${API_BASE_URL}/profile/upload-photos`,
   USER_CONNECTIONS: `${API_BASE_URL}/user/connections`,
-  USER_FEED: `${API_BASE_URL}/user/feed`,
+  USER_FEED: `${API_BASE_URL}/feed`,
   
   // Requests
   REQUEST_RECEIVED: `${API_BASE_URL}/user/request/received`,

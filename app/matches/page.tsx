@@ -198,7 +198,7 @@ export default function MatchesPage() {
             </svg>
           </div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">No more profiles</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">We're finding more amazing people for you to discover!</p>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">We&apos;re finding more amazing people for you to discover!</p>
           <button
             onClick={loadProfiles}
             className="bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold py-3 px-6 rounded-full hover:from-purple-600 hover:to-pink-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
@@ -495,7 +495,7 @@ export default function MatchesPage() {
                   <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
                 </svg>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">It's a Match! 🎉</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">It&apos;s a Match! 🎉</h2>
               <p className="text-gray-600 dark:text-gray-400 mb-4">
                 You and {matchedUser.full_name} liked each other!
               </p>

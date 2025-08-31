@@ -4,7 +4,7 @@ import { BackendUser, UserProfile, backendToUserProfile } from "@/types/user";
 
 export async function getAllProfiles(): Promise<UserProfile[]> {
   try {
-    const response = await fetch('http://localhost:3001/user/feed', {
+    const response = await fetch('http://localhost:3001/feed', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

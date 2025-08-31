@@ -1,4 +1,4 @@
-import { UserProfile } from "@/app/profile/page";
+import { UserProfile } from "@/types/user";
 import {
   createOrGetChannel,
   createVideoCall,
@@ -137,9 +137,9 @@ export default function StreamChatInterface({
         chatChannel.on("message.new", (event: Event) => {
           if (event.message) {
             if (event.message.text?.includes(`📹 Video call invitation`)) {
-              const customData = event.message as any;
+              const customData = event.message as { call_id?: string; caller_id?: string; caller_name?: string };
 
-              if (customData.caller_id !== userId) {
+              if (customData.caller_id !== userId && customData.call_id) {
                 setIncomingCallId(customData.call_id);
                 setCallerName(customData.caller_name || "Someone");
                 setIncomingCall(true);

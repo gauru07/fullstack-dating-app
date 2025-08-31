@@ -1,4 +1,4 @@
-import { UserProfile } from "@/app/profile/page";
+import { UserProfile } from "@/types/user";
 import { useEffect, useState } from "react";
 
 interface MatchNotificationProps {
@@ -52,7 +52,7 @@ export default function MatchNotification({
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                It's a Match! 🎉
+                It&apos;s a Match! 🎉
               </h3>
               <button
                 onClick={handleClose}
