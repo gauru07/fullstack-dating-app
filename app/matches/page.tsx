@@ -80,12 +80,22 @@ export default function MatchesPage() {
     const currentProfile = profiles[currentIndex];
     
     try {
+      console.log(`🔄 Sending like to user: ${currentProfile.id} (${currentProfile.firstName})`);
+      
       const response = await fetch(`http://localhost:3001/request/send/interested/${currentProfile.id}`, {
         method: 'POST',
         credentials: 'include',
       });
 
+      console.log(`📡 Like response status: ${response.status}`);
+      
       if (response.ok) {
+        const responseData = await response.json();
+        console.log(`✅ Like successful! Response:`, responseData);
+        
+        // Show success message
+        alert(`Like sent to ${currentProfile.firstName}!`);
+        
         // Simulate match (you can implement real match logic here)
         const isMatch = Math.random() > 0.7; // 30% chance of match for demo
         if (isMatch) {
@@ -99,10 +109,14 @@ export default function MatchesPage() {
         } else {
           advance();
         }
+      } else {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error(`❌ Like failed! Status: ${response.status}, Error:`, errorData);
+        alert(`Failed to send like: ${errorData.error || 'Unknown error'}`);
       }
     } catch (e) {
-      console.error("Error liking profile:", e);
-      advance();
+      console.error("❌ Error liking profile:", e);
+      alert("Network error while sending like. Please try again.");
     } finally {
       setIsLiking(false);
     }
@@ -115,12 +129,27 @@ export default function MatchesPage() {
     const currentProfile = profiles[currentIndex];
     
     try {
-      await fetch(`http://localhost:3001/request/send/ignored/${currentProfile.id}`, {
+      console.log(`🔄 Sending pass for user: ${currentProfile.id} (${currentProfile.firstName})`);
+      
+      const response = await fetch(`http://localhost:3001/request/send/ignored/${currentProfile.id}`, {
         method: 'POST',
         credentials: 'include',
       });
+
+      console.log(`📡 Pass response status: ${response.status}`);
+      
+      if (response.ok) {
+        const responseData = await response.json();
+        console.log(`✅ Pass successful! Response:`, responseData);
+        alert(`Passed on ${currentProfile.firstName}`);
+      } else {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error(`❌ Pass failed! Status: ${response.status}, Error:`, errorData);
+        alert(`Failed to pass: ${errorData.error || 'Unknown error'}`);
+      }
     } catch (e) {
-      console.error("Error passing profile:", e);
+      console.error("❌ Error passing profile:", e);
+      alert("Network error while passing. Please try again.");
     } finally {
       setIsPassing(false);
       advance();
@@ -219,35 +248,23 @@ export default function MatchesPage() {
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
           className="text-center mb-8"
         >
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
-            Discover Amazing People
-          </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-400 mb-6">
-            Find meaningful connections and start your journey
-          </p>
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Discover Matches</h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">Swipe through profiles and find your perfect match</p>
           
-          {/* Progress Indicator */}
-          <div className="flex items-center justify-center space-x-2 mb-8">
-            <div className="flex space-x-1">
-              {Array.from({ length: Math.min(profiles.length, 5) }, (_, i) => (
-                <div
-                  key={i}
-                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                    i === currentIndex 
-                      ? 'bg-pink-500 w-6' 
-                      : i < currentIndex 
-                        ? 'bg-green-500' 
-                        : 'bg-gray-300 dark:bg-gray-600'
-                  }`}
-                />
-              ))}
-            </div>
-            <span className="text-sm text-gray-500 dark:text-gray-400 ml-3">
-              {currentIndex + 1} of {profiles.length} profiles
-            </span>
-          </div>
+          {/* Refresh Button */}
+          <button
+            onClick={loadProfiles}
+            disabled={loading}
+            className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-pink-500 to-red-500 text-white rounded-full hover:from-pink-600 hover:to-red-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <svg className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            {loading ? 'Refreshing...' : 'Refresh Profiles'}
+          </button>
         </motion.div>
 
         {/* Main Content */}

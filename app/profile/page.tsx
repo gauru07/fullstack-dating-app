@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/contexts/auth-context";
 import { getImageUrl } from "@/lib/config";
+import { API_ENDPOINTS } from "@/lib/config";
 
 interface BackendProfile {
   _id: string;
@@ -49,35 +50,42 @@ export default function ProfilePage() {
     try {
       setLoading(true);
       setError(null);
+      
+      console.log('🔄 Loading profile...');
+      
       const response = await fetch('http://localhost:3001/profile/view', {
         method: 'GET',
         credentials: 'include',
       });
 
+      console.log('📡 Profile response status:', response.status);
+
       if (!response.ok) {
-        throw new Error('Failed to load profile');
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('❌ Profile load failed:', errorData);
+        throw new Error(errorData.error || `HTTP ${response.status}: Failed to load profile`);
       }
 
       const data = await response.json();
-      console.log('Profile data loaded:', data);
-      console.log('Photo URL:', data.photoUrl);
-      console.log('Photos array:', data.photos);
+      console.log('📊 Profile data loaded:', data);
+      console.log('📸 Photo URL:', data.photoUrl);
+      console.log('📸 Photos array:', data.photos);
       
       // Test getImageUrl function
       if (data.photoUrl) {
-        console.log('Testing getImageUrl with photoUrl:', data.photoUrl);
-        console.log('Result:', getImageUrl(data.photoUrl));
+        console.log('🔍 Testing getImageUrl with photoUrl:', data.photoUrl);
+        console.log('✅ Result:', getImageUrl(data.photoUrl));
       }
       
       if (data.photos && data.photos.length > 0) {
-        console.log('Testing getImageUrl with first photo:', data.photos[0]);
-        console.log('Result:', getImageUrl(data.photos[0]));
+        console.log('🔍 Testing getImageUrl with first photo:', data.photos[0]);
+        console.log('✅ Result:', getImageUrl(data.photos[0]));
       }
       
       setProfile(data);
     } catch (err) {
-      console.error("Error loading profile:", err);
-      setError("Failed to load profile");
+      console.error("❌ Error loading profile:", err);
+      setError(err instanceof Error ? err.message : "Failed to load profile");
     } finally {
       setLoading(false);
     }
@@ -91,24 +99,38 @@ export default function ProfilePage() {
     setError(null);
     
     try {
+      console.log('🔄 Starting photo upload...');
+      console.log('📁 Files to upload:', files.length);
+      
       const formData = new FormData();
       for (let i = 0; i < Math.min(files.length, 5); i++) {
-        formData.append('photos', files[i]);
+        const file = files[i];
+        console.log(`📸 File ${i + 1}:`, {
+          name: file.name,
+          size: file.size,
+          type: file.type
+        });
+        formData.append('photos', file);
       }
 
+      console.log('📡 Uploading to: http://localhost:3001/profile/upload-photos');
+      
       const response = await fetch('http://localhost:3001/profile/upload-photos', {
         method: 'POST',
         credentials: 'include',
         body: formData,
       });
 
+      console.log('📡 Upload response status:', response.status);
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to upload photos');
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('❌ Upload failed:', errorData);
+        throw new Error(errorData.message || errorData.error || `HTTP ${response.status}: Failed to upload photos`);
       }
 
       const result = await response.json();
-      console.log('Photo upload result:', result);
+      console.log('✅ Photo upload result:', result);
       
       // Reload profile to get updated photos
       await loadProfile();
@@ -116,10 +138,67 @@ export default function ProfilePage() {
       // Show success message
       alert('Photos uploaded successfully!');
     } catch (err) {
-      console.error("Error uploading photos:", err);
+      console.error("❌ Error uploading photos:", err);
       setError(err instanceof Error ? err.message : "Failed to upload photos");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleDeletePhoto = async (index: number) => {
+    if (!profile) return;
+
+    const photoToDelete = index === -1 ? profile.photoUrl : profile.photos[index];
+    const confirm = window.confirm(`Are you sure you want to delete this photo? This action cannot be undone.`);
+
+    if (!confirm) return;
+
+    try {
+      const response = await fetch(`http://localhost:3001/profile/delete-photo/${photoToDelete}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete photo');
+      }
+
+      const result = await response.json();
+      console.log('Photo deletion result:', result);
+      
+      // Reload profile to get updated photos
+      await loadProfile();
+      
+      // Show success message
+      alert('Photo deleted successfully!');
+    } catch (err) {
+      console.error("Error deleting photo:", err);
+      setError(err instanceof Error ? err.message : "Failed to delete photo");
+    }
+  };
+
+    const handleSetMainPhoto = async (photoUrl: string) => {
+    try {
+      setError(null);
+      const response = await fetch('http://localhost:3001/profile/set-main-photo', {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ photoUrl })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to set main photo');
+      }
+
+      // Reload profile to get updated photo
+      await loadProfile();
+      alert('Main photo updated successfully!');
+    } catch (err) {
+      console.error("Error setting main photo:", err);
+      setError(err instanceof Error ? err.message : "Failed to set main photo");
     }
   };
 
@@ -274,12 +353,25 @@ export default function ProfilePage() {
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                   {/* Main Profile Photo */}
                   <div className="relative aspect-square rounded-xl overflow-hidden border-2 border-pink-300 dark:border-pink-700">
-                    <Image
-                      src={getImageUrl(profile.photoUrl)}
-                      alt="Profile"
-                      fill
-                      className="object-cover"
-                    />
+                    {profile.photoUrl ? (
+                      <Image
+                        src={getImageUrl(profile.photoUrl)}
+                        alt="Profile"
+                        fill
+                        className="object-cover"
+                        onError={(e) => {
+                          console.error('❌ Main photo failed to load:', profile.photoUrl);
+                          const target = e.target as HTMLImageElement;
+                          target.src = "/default-avatar.png";
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                        <svg className="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    )}
                     <div className="absolute top-2 left-2 bg-pink-500 text-white text-xs px-2 py-1 rounded-full">
                       Main
                     </div>
@@ -294,7 +386,29 @@ export default function ProfilePage() {
                           alt={`Photo ${index + 1}`}
                           fill
                           className="object-cover"
+                          onError={(e) => {
+                            console.error('❌ Additional photo failed to load:', photo);
+                            const target = e.target as HTMLImageElement;
+                            target.src = "/default-avatar.png";
+                          }}
                         />
+                        {/* Photo Actions */}
+                        <div className="absolute top-2 right-2 space-x-1">
+                          <button
+                            onClick={() => handleSetMainPhoto(photo)}
+                            className="w-6 h-6 bg-blue-500 hover:bg-blue-600 text-white rounded-full text-xs flex items-center justify-center transition-colors"
+                            title="Set as main photo"
+                          >
+                            ★
+                          </button>
+                          <button
+                            onClick={() => handleDeletePhoto(index)}
+                            className="w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full text-xs flex items-center justify-center transition-colors"
+                            title="Delete photo"
+                          >
+                            ×
+                          </button>
+                        </div>
                       </div>
                     ))
                   ) : (

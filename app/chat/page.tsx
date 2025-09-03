@@ -14,12 +14,9 @@ export default function ChatListPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (user) {
-      loadMatches();
-    } else {
-      setLoading(false);
-    }
-  }, [user]);
+    // Always try to load matches when component mounts
+    loadMatches();
+  }, []);
 
   const loadMatches = async () => {
     try {
@@ -61,31 +58,7 @@ export default function ChatListPage() {
     return match.bio || "No bio available";
   };
 
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-red-50 dark:from-gray-900 dark:via-purple-900 dark:to-gray-800 pt-20 flex items-center justify-center">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center max-w-md mx-auto p-8"
-        >
-          <div className="w-24 h-24 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clipRule="evenodd" />
-            </svg>
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Please Sign In</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">You need to be signed in to view your messages.</p>
-          <Link 
-            href="/login" 
-            className="bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold py-3 px-6 rounded-full hover:from-purple-600 hover:to-pink-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 inline-block"
-          >
-            Sign In
-          </Link>
-        </motion.div>
-      </div>
-    );
-  }
+
 
   if (loading) {
     return (
@@ -170,6 +143,15 @@ export default function ChatListPage() {
           transition={{ delay: 0.1 }}
           className="flex items-center justify-center space-x-4 mb-8"
         >
+          <button
+            onClick={loadMatches}
+            className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-full hover:from-green-600 hover:to-blue-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+          >
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+            </svg>
+            <span>Refresh Matches</span>
+          </button>
           <Link
             href="/matches"
             className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-pink-500 to-red-500 text-white rounded-full hover:from-pink-600 hover:to-red-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
@@ -190,6 +172,8 @@ export default function ChatListPage() {
           </Link>
         </motion.div>
         
+
+
         {matches.length === 0 ? (
           <motion.div 
             initial={{ opacity: 0, y: 20 }}

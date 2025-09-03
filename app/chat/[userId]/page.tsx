@@ -45,19 +45,27 @@ export default function ChatPage() {
 
   const loadOtherUser = async () => {
     try {
+      setLoading(true);
+      console.log("🔄 Loading other user:", otherUserId);
+      
       const response = await fetch('http://localhost:3001/user/connections', {
         credentials: 'include',
       });
 
+      console.log("📡 Response status:", response.status);
+
       if (response.ok) {
         const data = await response.json();
-        console.log("Connections data:", data);
+        console.log("📊 Connections data:", data);
         
         if (data.data && Array.isArray(data.data)) {
+          console.log("🔍 Searching for user ID:", otherUserId);
+          console.log("🔍 Available user IDs:", data.data.map(u => u._id));
+          
           const foundUser = data.data.find((user: BackendUser) => user._id === otherUserId);
           
           if (foundUser) {
-            console.log("Found user:", foundUser);
+            console.log("✅ Found user:", foundUser);
             setOtherUser(foundUser);
             // Initialize with sample messages
             setMessages([
@@ -91,19 +99,25 @@ export default function ChatPage() {
               }
             ]);
           } else {
-            console.error('User not found in connections');
+            console.error('❌ User not found in connections:', otherUserId);
+            console.error('❌ Available users:', data.data.map(u => ({ id: u._id, name: `${u.firstName} ${u.lastName}` })));
+            setOtherUser(null);
           }
         } else {
-          console.error('No connections data found');
+          console.error('❌ No connections data found');
+          setOtherUser(null);
         }
       } else {
-        console.error('Failed to load connections');
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('❌ Failed to load connections:', errorData);
+        setOtherUser(null);
       }
-      } catch (error) {
-      console.error('Error loading other user:', error);
-      } finally {
-        setLoading(false);
-      }
+    } catch (error) {
+      console.error('❌ Error loading other user:', error);
+      setOtherUser(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getDisplayName = (user: BackendUser) => {
@@ -196,14 +210,45 @@ export default function ChatPage() {
               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Chat not found</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">This user might not be your match or the connection was removed.</p>
-          <Link 
-            href="/chat" 
-            className="bg-gradient-to-r from-pink-500 to-red-500 text-white font-semibold py-3 px-6 rounded-full hover:from-pink-600 hover:to-red-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 inline-block"
-          >
-            Back to Messages
-          </Link>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+            {!user ? 'Please Sign In' : 'User Not Found'}
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            {!user 
+              ? 'You need to be signed in to view this chat.' 
+              : `The user with ID "${otherUserId}" was not found in your connections. This might be due to a user ID mismatch.`
+            }
+          </p>
+          <div className="space-y-3">
+            {!user ? (
+              <Link 
+                href="/login" 
+                className="bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold py-3 px-6 rounded-full hover:from-purple-600 hover:to-pink-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 inline-block w-full"
+              >
+                Sign In
+              </Link>
+            ) : (
+              <>
+                <button
+                  onClick={loadOtherUser}
+                  className="bg-gradient-to-r from-pink-500 to-red-500 text-white font-semibold py-3 px-6 rounded-full hover:from-pink-600 hover:to-red-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 w-full"
+                >
+                  🔄 Try Again
+                </button>
+                <Link 
+                  href="/chat" 
+                  className="bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold py-3 px-6 rounded-full hover:from-purple-600 hover:to-pink-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 inline-block w-full"
+                >
+                  Back to Messages
+                </Link>
+                <div className="mt-4 p-3 bg-yellow-100 dark:bg-yellow-900 rounded-lg">
+                  <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                    💡 <strong>Debug Info:</strong> User ID: {otherUserId}
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
         </motion.div>
       </div>
     );
