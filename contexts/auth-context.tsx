@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { API_BASE_URL } from '@/lib/config';
+import { api } from '@/lib/api';
 
 interface User {
   _id: string;
@@ -29,6 +30,7 @@ interface AuthContextType {
   signIn: (emailId: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   setCurrentUser: (user: User) => void;
+  getAuthHeaders: () => Record<string, string>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -46,10 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const checkAuthStatus = async () => {
     try {
       // Try the check-auth endpoint first
-      const response = await fetch(`${API_BASE_URL}/check-auth`, {
-        method: 'GET',
-        credentials: 'include',
-      });
+      const response = await api.checkAuth();
       
       if (response.ok) {
         const data = await response.json();
@@ -112,15 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (emailId: string, password: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ emailId, password }),
-      });
-
+      const response = await api.login(emailId, password);
       const data = await response.json();
 
       if (!response.ok) {
@@ -132,8 +123,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (data.user) {
           setUser(data.user);
           localStorage.setItem('user', JSON.stringify(data.user));
-        } else {
-          // Otherwise, try to get user data from check-auth
+        }
+        
+        // If token is provided in response, store it
+        if (data.token) {
+          localStorage.setItem('authToken', data.token);
+        }
+        
+        // Try to get user data from check-auth as fallback
+        if (!data.user) {
           await checkAuthStatus();
         }
       } else {
@@ -145,21 +143,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Helper function to get auth headers
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('authToken');
+    return token ? { 'Authorization': `Bearer ${token}` } : {};
+  };
+
   const signOut = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/logout`, {
-        method: 'POST',
-        credentials: 'include',
-      });
+      const response = await api.logout();
 
       if (response.ok) {
         setUser(null);
         localStorage.removeItem('user');
+        localStorage.removeItem('authToken');
         router.push('/');
       } else {
         // Even if logout fails, clear local state
         setUser(null);
         localStorage.removeItem('user');
+        localStorage.removeItem('authToken');
         router.push('/');
       }
     } catch (error) {
@@ -167,6 +170,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Clear local state even if request fails
       setUser(null);
       localStorage.removeItem('user');
+      localStorage.removeItem('authToken');
       router.push('/');
     }
   };
@@ -179,7 +183,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signOut, setCurrentUser }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signOut, setCurrentUser, getAuthHeaders }}>
       {children}
     </AuthContext.Provider>
   );

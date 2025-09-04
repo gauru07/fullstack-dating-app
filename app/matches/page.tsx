@@ -6,6 +6,7 @@ import MatchCard from "@/components/MatchCard";
 import MatchButtons from "@/components/MatchButtons";
 import { BackendUser, UserProfile, backendToUserProfile } from "@/types/user";
 import { API_BASE_URL } from '@/lib/config';
+import { api } from '@/lib/api';
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 
@@ -27,10 +28,7 @@ export default function MatchesPage() {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${API_BASE_URL}/feed`, {
-        method: 'GET',
-        credentials: 'include',
-      });
+      const response = await api.getFeed();
 
       if (!response.ok) {
         throw new Error('Failed to fetch profiles');
@@ -83,10 +81,7 @@ export default function MatchesPage() {
     try {
       console.log(`🔄 Sending like to user: ${currentProfile.id} (${currentProfile.full_name})`);
       
-      const response = await fetch(`${API_BASE_URL}/request/send/interested/${currentProfile.id}`, {
-        method: 'POST',
-        credentials: 'include',
-      });
+      const response = await api.sendLike(currentProfile.id);
 
       console.log(`📡 Like response status: ${response.status}`);
       
@@ -132,10 +127,7 @@ export default function MatchesPage() {
     try {
       console.log(`🔄 Sending pass for user: ${currentProfile.id} (${currentProfile.full_name})`);
       
-      const response = await fetch(`${API_BASE_URL}/request/send/ignored/${currentProfile.id}`, {
-        method: 'POST',
-        credentials: 'include',
-      });
+      const response = await api.sendPass(currentProfile.id);
 
       console.log(`📡 Pass response status: ${response.status}`);
       
