@@ -144,7 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   // Helper function to get auth headers
-  const getAuthHeaders = () => {
+  const getAuthHeaders = (): Record<string, string> => {
     const token = localStorage.getItem('authToken');
     return token ? { 'Authorization': `Bearer ${token}` } : {};
   };
