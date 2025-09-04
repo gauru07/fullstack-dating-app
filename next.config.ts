@@ -11,11 +11,17 @@ const nextConfig: NextConfig = {
         port: "3001",
       },
       // Backend server images (production - replace with your actual domain)
-      ...(process.env.NEXT_PUBLIC_API_URL && process.env.NEXT_PUBLIC_API_URL !== 'http://localhost:3001' ? [{
-        protocol: new URL(process.env.NEXT_PUBLIC_API_URL).protocol.replace(':', ''),
-        hostname: new URL(process.env.NEXT_PUBLIC_API_URL).hostname,
-        ...(new URL(process.env.NEXT_PUBLIC_API_URL).port && { port: new URL(process.env.NEXT_PUBLIC_API_URL).port }),
-      }] : []),
+      ...(process.env.NEXT_PUBLIC_API_URL && process.env.NEXT_PUBLIC_API_URL !== 'http://localhost:3001' ? (() => {
+        const url = new URL(process.env.NEXT_PUBLIC_API_URL);
+        const pattern: any = {
+          protocol: url.protocol.replace(':', ''),
+          hostname: url.hostname,
+        };
+        if (url.port) {
+          pattern.port = url.port;
+        }
+        return [pattern];
+      })() : []),
       // External image sources
       {
         protocol: "https",
