@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import { API_BASE_URL } from '@/lib/config';
 
 interface User {
   _id: string;
@@ -45,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const checkAuthStatus = async () => {
     try {
       // Try the check-auth endpoint first
-      const response = await fetch('http://localhost:3001/check-auth', {
+      const response = await fetch(`${API_BASE_URL}/check-auth`, {
         method: 'GET',
         credentials: 'include',
       });
@@ -111,7 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (emailId: string, password: string) => {
     try {
-      const response = await fetch('http://localhost:3001/login', {
+      const response = await fetch(`${API_BASE_URL}/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -146,7 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     try {
-      const response = await fetch('http://localhost:3001/logout', {
+      const response = await fetch(`${API_BASE_URL}/logout`, {
         method: 'POST',
         credentials: 'include',
       });
