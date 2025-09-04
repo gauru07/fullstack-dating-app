@@ -80,7 +80,7 @@ export default function MatchesPage() {
     const currentProfile = profiles[currentIndex];
     
     try {
-      console.log(`🔄 Sending like to user: ${currentProfile.id} (${currentProfile.firstName})`);
+      console.log(`🔄 Sending like to user: ${currentProfile.id} (${currentProfile.full_name})`);
       
       const response = await fetch(`http://localhost:3001/request/send/interested/${currentProfile.id}`, {
         method: 'POST',
@@ -94,7 +94,7 @@ export default function MatchesPage() {
         console.log(`✅ Like successful! Response:`, responseData);
         
         // Show success message
-        alert(`Like sent to ${currentProfile.firstName}!`);
+        alert(`Like sent to ${currentProfile.full_name}!`);
         
         // Simulate match (you can implement real match logic here)
         const isMatch = Math.random() > 0.7; // 30% chance of match for demo
@@ -129,7 +129,7 @@ export default function MatchesPage() {
     const currentProfile = profiles[currentIndex];
     
     try {
-      console.log(`🔄 Sending pass for user: ${currentProfile.id} (${currentProfile.firstName})`);
+      console.log(`🔄 Sending pass for user: ${currentProfile.id} (${currentProfile.full_name})`);
       
       const response = await fetch(`http://localhost:3001/request/send/ignored/${currentProfile.id}`, {
         method: 'POST',
@@ -141,7 +141,7 @@ export default function MatchesPage() {
       if (response.ok) {
         const responseData = await response.json();
         console.log(`✅ Pass successful! Response:`, responseData);
-        alert(`Passed on ${currentProfile.firstName}`);
+        alert(`Passed on ${currentProfile.full_name}`);
       } else {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
         console.error(`❌ Pass failed! Status: ${response.status}, Error:`, errorData);
