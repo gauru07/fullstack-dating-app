@@ -14,7 +14,7 @@ const nextConfig: NextConfig = {
       ...(process.env.NEXT_PUBLIC_API_URL && process.env.NEXT_PUBLIC_API_URL !== 'http://localhost:3001' ? [{
         protocol: new URL(process.env.NEXT_PUBLIC_API_URL).protocol.replace(':', ''),
         hostname: new URL(process.env.NEXT_PUBLIC_API_URL).hostname,
-        port: new URL(process.env.NEXT_PUBLIC_API_URL).port || undefined,
+        ...(new URL(process.env.NEXT_PUBLIC_API_URL).port && { port: new URL(process.env.NEXT_PUBLIC_API_URL).port }),
       }] : []),
       // External image sources
       {
