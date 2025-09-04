@@ -3,9 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useAuth } from "@/contexts/auth-context";
-import { getImageUrl } from "@/lib/config";
-import { API_ENDPOINTS } from "@/lib/config";
+import { getImageUrl, API_BASE_URL } from "@/lib/config";
 
 interface BackendProfile {
   _id: string;
@@ -36,7 +34,6 @@ interface BackendProfile {
 }
 
 export default function ProfilePage() {
-  const { user } = useAuth();
   const [profile, setProfile] = useState<BackendProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,7 +50,7 @@ export default function ProfilePage() {
       
       console.log('🔄 Loading profile...');
       
-      const response = await fetch('http://localhost:3001/profile/view', {
+      const response = await fetch(`${API_BASE_URL}/profile/view`, {
         method: 'GET',
         credentials: 'include',
       });
@@ -113,9 +110,9 @@ export default function ProfilePage() {
         formData.append('photos', file);
       }
 
-      console.log('📡 Uploading to: http://localhost:3001/profile/upload-photos');
+      console.log('📡 Uploading to:', `${API_BASE_URL}/profile/upload-photos`);
       
-      const response = await fetch('http://localhost:3001/profile/upload-photos', {
+      const response = await fetch(`${API_BASE_URL}/profile/upload-photos`, {
         method: 'POST',
         credentials: 'include',
         body: formData,
@@ -181,7 +178,7 @@ export default function ProfilePage() {
     const handleSetMainPhoto = async (photoUrl: string) => {
     try {
       setError(null);
-      const response = await fetch('http://localhost:3001/profile/set-main-photo', {
+      const response = await fetch(`${API_BASE_URL}/profile/set-main-photo`, {
         method: 'PUT',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
