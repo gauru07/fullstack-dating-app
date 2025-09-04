@@ -60,7 +60,7 @@ export default function ChatPage() {
         
         if (data.data && Array.isArray(data.data)) {
           console.log("🔍 Searching for user ID:", otherUserId);
-          console.log("🔍 Available user IDs:", data.data.map(u => u._id));
+          console.log("🔍 Available user IDs:", data.data.map((u: BackendUser) => u._id));
           
           const foundUser = data.data.find((user: BackendUser) => user._id === otherUserId);
           
@@ -100,7 +100,7 @@ export default function ChatPage() {
             ]);
           } else {
             console.error('❌ User not found in connections:', otherUserId);
-            console.error('❌ Available users:', data.data.map(u => ({ id: u._id, name: `${u.firstName} ${u.lastName}` })));
+            console.error('❌ Available users:', data.data.map((u: BackendUser) => ({ id: u._id, name: `${u.firstName} ${u.lastName}` })));
             setOtherUser(null);
           }
         } else {
