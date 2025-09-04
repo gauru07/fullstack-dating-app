@@ -151,7 +151,7 @@ export default function ProfilePage() {
     if (!confirm) return;
 
     try {
-      const response = await fetch(`http://localhost:3001/profile/delete-photo/${photoToDelete}`, {
+      const response = await fetch(`${API_BASE_URL}/profile/delete-photo/${photoToDelete}`, {
         method: 'DELETE',
         credentials: 'include',
       });

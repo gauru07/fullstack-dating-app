@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { BackendUser, backendToUserProfile } from '@/types/user';
+import { API_BASE_URL } from '@/lib/config';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -48,7 +49,7 @@ export default function ChatPage() {
       setLoading(true);
       console.log("🔄 Loading other user:", otherUserId);
       
-      const response = await fetch('http://localhost:3001/user/connections', {
+      const response = await fetch(`${API_BASE_URL}/user/connections`, {
         credentials: 'include',
       });
 

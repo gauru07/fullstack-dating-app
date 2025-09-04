@@ -1,6 +1,7 @@
 // app/matches/list/page.tsx
 "use client";
 import { BackendUser, UserProfile, backendToUserProfile } from "@/types/user";
+import { API_BASE_URL } from '@/lib/config';
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -19,7 +20,7 @@ export default function MatchesListPage() {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch('http://localhost:3001/user/connections', {
+      const response = await fetch(`${API_BASE_URL}/user/connections`, {
         method: 'GET',
         credentials: 'include',
       });

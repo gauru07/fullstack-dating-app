@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { API_BASE_URL } from '@/lib/config';
 
 export default function EditProfilePage() {
   const [loading, setLoading] = useState(true);
@@ -35,7 +36,7 @@ export default function EditProfilePage() {
   useEffect(() => {
     async function loadProfile() {
       try {
-        const response = await fetch('http://localhost:3001/profile/view', {
+        const response = await fetch(`${API_BASE_URL}/profile/view`, {
           method: 'GET',
           credentials: 'include',
         });
@@ -115,7 +116,7 @@ export default function EditProfilePage() {
         prompts: formData.prompts,
       };
 
-      const response = await fetch('http://localhost:3001/profile/update', {
+      const response = await fetch(`${API_BASE_URL}/profile/update`, {
         method: 'PUT',
         credentials: 'include',
         headers: {
