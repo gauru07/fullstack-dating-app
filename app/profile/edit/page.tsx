@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { API_BASE_URL } from '@/lib/config';
+import { api } from '@/lib/api';
 
 export default function EditProfilePage() {
   const [loading, setLoading] = useState(true);
@@ -36,10 +37,7 @@ export default function EditProfilePage() {
   useEffect(() => {
     async function loadProfile() {
       try {
-        const response = await fetch(`${API_BASE_URL}/profile/view`, {
-          method: 'GET',
-          credentials: 'include',
-        });
+        const response = await api.getProfile();
 
         if (!response.ok) {
           throw new Error("Failed to load profile");
@@ -116,14 +114,7 @@ export default function EditProfilePage() {
         prompts: formData.prompts,
       };
 
-      const response = await fetch(`${API_BASE_URL}/profile/update`, {
-        method: 'PUT',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updateData),
-      });
+      const response = await api.updateProfile(updateData);
 
       if (!response.ok) {
         const errorData = await response.json();

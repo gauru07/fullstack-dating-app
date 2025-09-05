@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { getImageUrl, API_BASE_URL } from "@/lib/config";
+import { api } from '@/lib/api';
 
 interface BackendProfile {
   _id: string;
@@ -50,10 +51,7 @@ export default function ProfilePage() {
       
       console.log('🔄 Loading profile...');
       
-      const response = await fetch(`${API_BASE_URL}/profile/view`, {
-        method: 'GET',
-        credentials: 'include',
-      });
+      const response = await api.getProfile();
 
       console.log('📡 Profile response status:', response.status);
 
@@ -151,10 +149,7 @@ export default function ProfilePage() {
     if (!confirm) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/profile/delete-photo/${photoToDelete}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
+      const response = await api.deletePhoto(photoToDelete);
 
       if (!response.ok) {
         const errorData = await response.json();

@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { BackendUser, backendToUserProfile } from '@/types/user';
 import { API_BASE_URL } from '@/lib/config';
+import { api } from '@/lib/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -49,9 +50,7 @@ export default function ChatPage() {
       setLoading(true);
       console.log("🔄 Loading other user:", otherUserId);
       
-      const response = await fetch(`${API_BASE_URL}/user/connections`, {
-        credentials: 'include',
-      });
+      const response = await api.getConnections();
 
       console.log("📡 Response status:", response.status);
 

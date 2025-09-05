@@ -2,6 +2,7 @@
 "use client";
 import { BackendUser, UserProfile, backendToUserProfile } from "@/types/user";
 import { API_BASE_URL } from '@/lib/config';
+import { api } from '@/lib/api';
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -20,10 +21,7 @@ export default function MatchesListPage() {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${API_BASE_URL}/user/connections`, {
-        method: 'GET',
-        credentials: 'include',
-      });
+      const response = await api.getConnections();
 
       if (!response.ok) {
         throw new Error('Failed to fetch matches');

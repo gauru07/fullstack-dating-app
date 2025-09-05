@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { BackendUser, UserProfile, backendToUserProfile } from '@/types/user';
 import { API_BASE_URL } from '@/lib/config';
+import { api } from '@/lib/api';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
@@ -28,9 +29,7 @@ export default function RequestsPage() {
       setLoading(true);
       setError(null);
       
-      const response = await fetch(`${API_BASE_URL}/user/request/received`, {
-        credentials: 'include',
-      });
+      const response = await api.getReceivedRequests();
 
       if (!response.ok) {
         throw new Error('Failed to fetch requests');
@@ -85,10 +84,7 @@ export default function RequestsPage() {
 
   const handleAccept = async (requestId: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/request/review/accepted/${requestId}`, {
-        method: 'POST',
-        credentials: 'include',
-      });
+      const response = await api.acceptRequest(requestId);
 
       if (response.ok) {
         // Remove the accepted request from the list
@@ -103,10 +99,7 @@ export default function RequestsPage() {
 
   const handleReject = async (requestId: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/request/review/rejected/${requestId}`, {
-        method: 'POST',
-        credentials: 'include',
-      });
+      const response = await api.rejectRequest(requestId);
 
       if (response.ok) {
         // Remove the rejected request from the list

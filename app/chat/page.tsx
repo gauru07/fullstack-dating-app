@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { BackendUser, UserProfile, backendToUserProfile } from '@/types/user';
 import { API_BASE_URL } from '@/lib/config';
+import { api } from '@/lib/api';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -25,9 +26,7 @@ export default function ChatListPage() {
       setError(null);
       
       // Try the matches endpoint first
-      const response = await fetch(`${API_BASE_URL}/user/connections`, {
-        credentials: 'include',
-      });
+      const response = await api.getConnections();
 
       if (!response.ok) {
         throw new Error('Failed to fetch matches');
